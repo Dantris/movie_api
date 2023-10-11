@@ -1,7 +1,4 @@
-const crypto = require('crypto');
-const jwtSecret = crypto.randomBytes(64).toString('hex');
-module.exports.jwtSecret = jwtSecret;
-
+const jwtSecret = 'mySecret'
 
 const jwt = require('jsonwebtoken'),
     passport = require('passport');
@@ -49,3 +46,5 @@ module.exports = (router) => {
         })(req, res);
     });
 }
+
+module.exports.jwtSecret = jwtSecret;

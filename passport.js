@@ -1,5 +1,5 @@
 const auth = require('./auth');
-const jwtSecret = auth.jwtSecret;
+const jwtSecret = 'mySecret';
 
 const passport = require('passport'),
     LocalStrategy = require('passport-local').Strategy,
@@ -17,37 +17,32 @@ passport.use(
             passwordField: 'Password',
         },
         async (username, password, callback) => {
-            console.log(`${username} ${password}`);
-            await Users.findOne({ Username: username })
-            .then((user) => {
-                if(!user) {
-                    console.log('incorrect username');
+            try {
+                const user = await Users.findOne({ Username: username });
+                if (!user) {
                     return callback(null, false, {
                         message: 'Incorrect username or password.',
                     });
                 }
-                console.log('finished');
                 return callback(null, user);
-            })
-            .catch((error) => {
-                console.log(error);
+            } catch (error) {
                 return callback(error);
-            })
+            }
         }
     )
 );
-    
 
 passport.use(new JWTStrategy({
     jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
-    secretOrKey: jwtSecret, // Use the jwtSecret variable here
+    secretOrKey: jwtSecret,
 }, async (jwtPayload, callback) => {
-    return await Users.findById(jwtPayload._id)
-    .then((user) => {
+    try {
+        const user = await Users.findById(jwtPayload._id);
+        if (!user) {
+            return callback(null, false);
+        }
         return callback(null, user);
-    })
-    .catch((error) => {
+    } catch (error) {
         return callback(error);
-    });
+    }
 }));
-

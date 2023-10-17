@@ -13,11 +13,11 @@ const cors = require('cors');
 
 
 const Movies = Models.Movie;
-const Users = Models.User;
+const {Users, User} = Models.User;
 
 // mongoose.connect('mongodb://localhost:27017/myflix', { useNewUrlParser: true, useUnifiedTopology: true });
 
-mongoose.connect( process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 const app = express();
@@ -27,7 +27,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 // CORS
-let allowedOrigins = ['http://localhost:8080', 'http://testsite.com'];
+let allowedOrigins = ['http://localhost:3000', 'http://testsite.com', 'https://myflix-45677d7e298f.herokuapp.com/'];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -175,21 +175,18 @@ app.get('/movies/genre_description/:Genre', passport.authenticate('jwt', { sessi
 
 
 // GET all users
-app.post('/users', [
+aapp.post('/users', [
     check('Username', 'Username is required').isLength({ min: 5 }),
     check('Username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
     check('Password', 'Password is required').not().isEmpty(),
     check('Email', 'Email does not appear to be valid').isEmail()
 ], async (req, res) => {
+
     // Check the validation object for errors
     let errors = validationResult(req);
-
     if (!errors.isEmpty()) {
         return res.status(422).json({ errors: errors.array() });
     }
-
-    // Store the password as plaintext (not recommended for production)
-    const plainTextPassword = req.body.Password;
 
     await Users.findOne({ Username: req.body.Username })
         .then((user) => {
@@ -197,13 +194,14 @@ app.post('/users', [
                 // If the user is found, send a response that it already exists
                 return res.status(400).send(req.body.Username + ' already exists');
             } else {
-                Users
-                    .create({
-                        Username: req.body.Username,
-                        Password: plainTextPassword, // Store as plaintext
-                        Email: req.body.Email,
-                        Birthday: req.body.Birthday
-                    })
+                let user = new Users({
+                    Username: req.body.Username,
+                    Password: req.body.Password, // Use plain password, it will be hashed by the middleware
+                    Email: req.body.Email,
+                    Birthday: req.body.Birthday
+                });
+
+                user.save()
                     .then((user) => { res.status(201).json(user) })
                     .catch((error) => {
                         console.error(error);
@@ -365,7 +363,7 @@ app.use((err, req, res, next) => {
     console.error(err.stack);
 });
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 3000;
 app.listen(port, '0.0.0.0', () => {
   console.log('Listening on Port ' + port);
 });

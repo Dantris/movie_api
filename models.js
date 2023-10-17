@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const movieSchema = mongoose.Schema({
   title: { type: String, required: true }, // Use lowercase for field names to match your database
@@ -24,13 +24,23 @@ let userSchema = mongoose.Schema({
 ref: 'Movie' }]
 });
 
-userSchema.statics.hashPassword = (password) => {
-    return bcrypt.hashSync(password, 10);
-  };
-  
-  userSchema.methods.validatePassword = function(password) {
-    return bcrypt.compareSync(password, this.Password);
-  };
+userSchema.pre('save', async function(next) {
+  console.log('Pre-save middleware called');
+
+  if (!this.isModified('Password')) {
+      return next();
+  }
+
+  try {
+      const salt = await bcrypt.genSalt(10);
+      this.Password = await bcrypt.hash(this.Password, salt);
+      next();
+  } catch (error) {
+      return next(error);
+  }
+});
+
+
 
 let Movie = mongoose.model('Movie', movieSchema);
 let User = mongoose.model('User', userSchema);

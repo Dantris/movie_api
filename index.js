@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const Models = require('./models');
 const passport = require('passport'); 
 const auth = require('./auth');
-const { check, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const cors = require('cors');
 
 

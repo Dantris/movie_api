@@ -13,8 +13,7 @@ const cors = require('cors');
 
 
 const Movies = Models.Movie;
-const Users = require('./models/users');
-const User = require('./models/user');
+const Users = Models.User;
 
 
 // mongoose.connect('mongodb://localhost:27017/myflix', { useNewUrlParser: true, useUnifiedTopology: true });

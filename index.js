@@ -177,10 +177,11 @@ app.get('/movies/genre_description/:Genre', passport.authenticate('jwt', { sessi
 
 // GET all users
 app.post('/users', [
-    check('Username', 'Username is required').isLength({ min: 5 }),
-    check('Username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
-    check('Password', 'Password is required').not().isEmpty(),
-    check('Email', 'Email does not appear to be valid').isEmail()
+    body('Username', 'Username is required').isLength({ min: 5 }),
+    body('Username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
+    body('Password', 'Password is required').not().isEmpty(),
+    body('Password', 'Password must be at least 8 characters long').isLength({ min: 8 }),
+    body('Email', 'Email does not appear to be valid').isEmail()
 ], async (req, res) => {
 
     // Check the validation object for errors

@@ -78,7 +78,7 @@ passport.authenticate('local', { session: false }, (error, user, info) => {
 });
 
 // Get all movies
-app.get('/movies',(req, res) => {
+app.get('/movies', passport.authenticate('jwt', { session: false }),(req, res) => {
     Movies.find()
         .then((movies) => {
             res.status(200).json(movies);

@@ -15,21 +15,41 @@ let generateJWTToken = (user) => {
 }
 
 
-/* POST login */
+// /* POST login */
+// module.exports = (router) => {
+//     router.post('/login', (req, res) => {
+//         passport.authenticate('local', { session: false }, (error, user, info) => {
+//             if (error) {
+//                 console.log(error);
+//                 return res.status(400).json({
+//                     message: 'Error. Something is not right.',
+//                     user: user
+//                 });
+//             }
+//             if (!user) {
+//                 return res.status(400).json({
+//                     message: 'Error. No user.',
+//                     user: user
+//                 });
+//             }
+//             req.login(user, { session: false }, (error) => {
+//                 if (error) {
+//                     res.send(error);
+//                 }
+//                 let token = generateJWTToken(user.toJSON());
+//                 return res.json({user, token});
+//             });
+//         })(req, res);
+//     });
+// }
+
 module.exports = (router) => {
     router.post('/login', (req, res) => {
         passport.authenticate('local', { session: false }, (error, user, info) => {
-            if (error) {
-                console.log(error);
-                return res.status(400).json({
-                    message: 'Error. Something is not right.',
-                    user: user
-                });
-            }
-            if (!user) {
-                return res.status(400).json({
-                    message: 'Error. No user.',
-                    user: user
+            if (error || !user) {
+                return res.status(200).json({
+                    message: 'something went wrong',
+                    user: user,
                 });
             }
             req.login(user, { session: false }, (error) => {
@@ -37,8 +57,8 @@ module.exports = (router) => {
                     res.send(error);
                 }
                 let token = generateJWTToken(user.toJSON());
-                return res.json({user, token});
+                return res.json({ user, token });  // returns the token
             });
         })(req, res);
-    });
+    })
 }

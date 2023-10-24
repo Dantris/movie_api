@@ -6,7 +6,7 @@ const express = require('express'),
     uuid = require('uuid');
 const mongoose = require('mongoose');
 const Models = require('./models');
-const passport = require('passport'); 
+const passport = require('passport');
 const auth = require('./auth');
 const { body, validationResult } = require('express-validator');
 const cors = require('cors');
@@ -15,10 +15,10 @@ const cors = require('cors');
 const Movies = Models.Movie;
 const Users = Models.User;
 
+const mongoURL = "mongodb://localhost:27017/myflix"
 
-// mongoose.connect('mongodb://localhost:27017/myflix', { useNewUrlParser: true, useUnifiedTopology: true });
 
-mongoose.connect(process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.CONNECTION_URI || mongoURL, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 const app = express();
@@ -31,14 +31,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 let allowedOrigins = ['http://localhost:3000', 'http://testsite.com', 'https://myflix-45677d7e298f.herokuapp.com/'];
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if(!origin) return callback(null, true);
-    if(allowedOrigins.indexOf(origin) === -1){ // If a specific origin isn’t found on the list of allowed origins
-      let message = 'The CORS policy for this application doesn’t allow access from origin ' + origin;
-      return callback(new Error(message ), false);
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) { // If a specific origin isn’t found on the list of allowed origins
+            let message = 'The CORS policy for this application doesn’t allow access from origin ' + origin;
+            return callback(new Error(message), false);
+        }
+        return callback(null, true);
     }
-    return callback(null, true);
-  }
 }));
 
 // Log URL request data to log.txt text file
@@ -58,27 +58,27 @@ app.get('/', (req, res) => {
 });
 
 
-  
+
 // Login route for generating JWT tokens
 app.post('/login', passport.authenticate('jwt', { session: false }), (req, res) => {
-passport.authenticate('local', { session: false }, (error, user, info) => {
-    if (error || !user) {
-    return res.status(400).json({
-        message: 'Incorrect username or password.',
-    });
-    }
-    req.login(user, { session: false }, (error) => {
-    if (error) {
-        res.send(error);
-    }
-    const token = generateJWTToken(user.toJSON());
-    return res.json({ user, token });
-    });
-})(req, res);
+    passport.authenticate('local', { session: false }, (error, user, info) => {
+        if (error || !user) {
+            return res.status(400).json({
+                message: 'Incorrect username or password.',
+            });
+        }
+        req.login(user, { session: false }, (error) => {
+            if (error) {
+                res.send(error);
+            }
+            const token = generateJWTToken(user.toJSON());
+            return res.json({ user, token });
+        });
+    })(req, res);
 });
 
 // Get all movies
-app.get('/movies', passport.authenticate('jwt', { session: false }),(req, res) => {
+app.get('/movies', passport.authenticate('jwt', { session: false }), (req, res) => {
     Movies.find()
         .then((movies) => {
             res.status(200).json(movies);
@@ -92,39 +92,39 @@ app.get('/movies', passport.authenticate('jwt', { session: false }),(req, res) =
 // Get movie by title
 app.get('/movies/title/:Title', passport.authenticate('jwt', { session: false }), (req, res) => {
     Movies.findOne({ title: req.params.Title }) // Use "title" in lowercase and req.params.Title as it's defined in your route
-      .then((movie) => {
-        if (!movie) {
-          return res.status(404).send('Error: ' + req.params.Title + ' was not found');
-        }
-        res.status(200).json(movie);
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send('Error: ' + err);
-      });
-  });
-  
+        .then((movie) => {
+            if (!movie) {
+                return res.status(404).send('Error: ' + req.params.Title + ' was not found');
+            }
+            res.status(200).json(movie);
+        })
+        .catch((err) => {
+            console.error(err);
+            res.status(500).send('Error: ' + err);
+        });
+});
 
-  app.get('/movies/genre/:Genre', passport.authenticate('jwt', { session: false }), (req, res) => {
+
+app.get('/movies/genre/:Genre', passport.authenticate('jwt', { session: false }), (req, res) => {
 
     Movies.find({ genre: req.params.Genre }) // Use 'Movie' instead of 'movies'
-      .then((movies) => {
-        console.log('Movies found:', movies);
-        if (movies.length === 0) {
-          return res.status(404).send('Error: no movies found with the ' + req.params.Genre + ' genre type.');
-        } else {
-          res.status(200).json(movies);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send('Error: ' + err);
-      });
-  });
-  
-  
-  
-  
+        .then((movies) => {
+            console.log('Movies found:', movies);
+            if (movies.length === 0) {
+                return res.status(404).send('Error: no movies found with the ' + req.params.Genre + ' genre type.');
+            } else {
+                res.status(200).json(movies);
+            }
+        })
+        .catch((err) => {
+            console.error(err);
+            res.status(500).send('Error: ' + err);
+        });
+});
+
+
+
+
 
 // Get movies by director name
 app.get('/movies/directors/:Director', passport.authenticate('jwt', { session: false }), (req, res) => {
@@ -238,31 +238,31 @@ app.get('/users/:Username', passport.authenticate('jwt', { session: false }), (r
 app.post('/users/:Username/movies/:MovieID', passport.authenticate('jwt', { session: false }), (req, res) => {
     const username = req.params.Username;
     const movieId = req.params.MovieID;
-  
+
     // Check if movieId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(movieId)) {
-      return res.status(400).send('Error: Invalid Movie ID');
+        return res.status(400).send('Error: Invalid Movie ID');
     }
-  
+
     Users.findOneAndUpdate(
-      { Username: username },
-      {
-        $addToSet: { FavoriteMovies: new mongoose.Types.ObjectId(movieId) }, // Use 'new'
-      },
-      { new: true }
+        { Username: username },
+        {
+            $addToSet: { FavoriteMovies: new mongoose.Types.ObjectId(movieId) }, // Use 'new'
+        },
+        { new: true }
     )
-      .then((updatedUser) => {
-        if (!updatedUser) {
-          return res.status(404).send('Error: User was not found');
-        } else {
-          res.json(updatedUser);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send('Error: ' + error);
-      });
-  });
+        .then((updatedUser) => {
+            if (!updatedUser) {
+                return res.status(404).send('Error: User was not found');
+            } else {
+                res.json(updatedUser);
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(500).send('Error: ' + error);
+        });
+});
 
 // Update a users data by username
 app.put('/users/:Username', passport.authenticate('jwt', { session: false }), (req, res) => {
@@ -330,35 +330,35 @@ app.delete('/users/:Username', passport.authenticate('jwt', { session: false }),
 });
 
 // Delete movie from favorites
-app.delete('/users/:Username/movies/:MovieID', passport.authenticate('jwt', { session: false }),(req, res) => {
+app.delete('/users/:Username/movies/:MovieID', passport.authenticate('jwt', { session: false }), (req, res) => {
     const username = req.params.Username;
     const movieId = req.params.MovieID;
-  
+
     // Check if movieId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(movieId)) {
-      return res.status(400).send('Error: Invalid Movie ID');
+        return res.status(400).send('Error: Invalid Movie ID');
     }
-  
+
     Users.findOneAndUpdate(
-      { Username: username },
-      {
-        $pull: { FavoriteMovies: new mongoose.Types.ObjectId(movieId) }, // Use 'new' and $pull to remove the movie
-      },
-      { new: true }
+        { Username: username },
+        {
+            $pull: { FavoriteMovies: new mongoose.Types.ObjectId(movieId) }, // Use 'new' and $pull to remove the movie
+        },
+        { new: true }
     )
-      .then((updatedUser) => {
-        if (!updatedUser) {
-          return res.status(404).send('Error: User was not found');
-        } else {
-          res.json(updatedUser);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send('Error: ' + error);
-      });
-  });
-  
+        .then((updatedUser) => {
+            if (!updatedUser) {
+                return res.status(404).send('Error: User was not found');
+            } else {
+                res.json(updatedUser);
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(500).send('Error: ' + error);
+        });
+});
+
 
 app.use((err, req, res, next) => {
     console.log(err);
@@ -367,5 +367,5 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 3000;
 app.listen(port, '0.0.0.0', () => {
-  console.log('Listening on Port ' + port);
+    console.log('Listening on Port ' + port);
 });

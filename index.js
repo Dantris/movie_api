@@ -267,23 +267,27 @@ app.post('/users/:Username/movies/:MovieID', passport.authenticate('jwt', { sess
 // Update a users data by username
 app.put('/users/:Username', passport.authenticate('jwt', { session: false }), (req, res) => {
 
-    Users.findOneAndUpdate(
-        { Username: req.params.Username },
-        {
-            $set: {
-                Username: req.body.Username,
-                Password: req.body.Password,
-                Email: req.body.Email,
-                Birthday: req.body.Birthday,
-            },
-        },
-        { new: true }
-    )
+    // Find the user
+    Users.findOne({ Username: req.params.Username })
         .then((user) => {
             if (!user) {
                 return res.status(404).send('Error: No user was found');
             } else {
-                res.json(user);
+                // Update the user data
+                user.Username = req.body.Username || user.Username;
+                user.Password = req.body.Password || user.Password;
+                user.Email = req.body.Email || user.Email;
+                user.Birthday = req.body.Birthday || user.Birthday;
+
+                // Save the updated user data
+                user.save()
+                    .then((updatedUser) => {
+                        res.json(updatedUser);
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                        res.status(500).send('Error: ' + err);
+                    });
             }
         })
         .catch((err) => {

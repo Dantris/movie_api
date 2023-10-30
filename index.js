@@ -78,7 +78,7 @@ app.post('/login', passport.authenticate('jwt', { session: false }), (req, res) 
 });
 
 // Get all movies
-app.get('/movies', passport.authenticate('jwt', { session: false }), (req, res) => {
+app.get('/movies', (req, res) => {
     Movies.find()
         .then((movies) => {
             res.status(200).json(movies);
@@ -266,6 +266,7 @@ app.post('/users/:Username/movies/:MovieID', passport.authenticate('jwt', { sess
 
 // Update a users data by username
 app.put('/users/:Username', passport.authenticate('jwt', { session: false }), (req, res) => {
+
     Users.findOneAndUpdate(
         { Username: req.params.Username },
         {
